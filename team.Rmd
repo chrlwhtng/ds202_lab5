@@ -10,9 +10,65 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
+library(tidyverse)
+library(ggplot2)
+
 acc <- read.csv("https://raw.githubusercontent.com/xdaiISU/ds202materials/master/hwlabs/fars2017/accident.csv", stringsAsFactors = FALSE)
 
 per <- read.csv("https://raw.githubusercontent.com/xdaiISU/ds202materials/master/hwlabs/fars2017/person.csv", stringsAsFactors = FALSE)
+```
 
+1. Are there some days of the week where more accidents happen than on others (use variable DAY_WEEK)?
+```{r}
+acc[1, ]
+#Record one is on Feb 19, 2017, a Sunday. DAY_WEEK is 1, meaning 7 is Saturday, etc.
+
+table(acc$DAY_WEEK)
+```
+
+This table shows that most accidents took place on weekends. There were roughly equal number of crashes between Monday (2) and Thursday (4). The day with the most crashes was Saturday.
+
+2. What time of the day do accidents happen (use variable HOUR)?
+```{r}
+#For whatever reason, HOUR includes 99as an hour, and I'm not sure how to include that.
+acc %>% filter(HOUR != 99) %>% ggplot(aes(x=HOUR)) + geom_histogram(binwidth=1) + 
+  geom_text(stat='count', aes(label=stat(count), vjust=-.5), size=2) + 
+  ggtitle("Count of Accidents in Each Hour of the Day")
+```
+
+Based on this histogram, it appears that hour 18 (6 PM) is the most common time for accidents to occur. In fact, it appears that it is most likely to get in an accident in the afternoon and night hours than in the moring half of the day.
+
+3. What is the number of accidents with at least one drunk driver (use variable DRUNK_DR)?
+```{r}
+acc %>% filter(DRUNK_DR >= 1) %>% count()
 
 ```
+
+There are 8,769 accidents with at least 1 drunk driver in this data set.
+
+4. In the person table, identify drivers (PER_TYP == 1, see FARS manual) and subset on them.
+```{r}
+per <- per %>% filter(PER_TYP == 1)
+```
+
+5. Join accident and person table (work out which variable(s) to use)
+```{r}
+dat <- acc %>% full_join(per, by=c('ST_CASE', 'COUNTY', 'DAY', 'MONTH', 'HOUR', 'MINUTE'))
+```
+
+6. Tally the number of accidents by day of the week (DAY_WEEK), hour of the day (HOUR) and gender (SEX). Visualize the results.
+```{r}
+dat %>% filter(SEX == 1 | SEX == 2) %>% ggplot(aes(x=HOUR)) + 
+  geom_histogram(binwidth=2) + facet_grid(SEX~DAY_WEEK) +
+  xlim(c(0, 25)) + 
+  ggtitle("Count of Accidents by Day of Week and Gender of Driver")
+```
+
+7. Now plot a choropleth map of accidents on a county level
+
+Read the description for the STATE and COUNTY columns in the FARS manual. The state & county codes are Geographic Locator Codes (GLCs) from the General Services Administration’s (GSA) publication
+Use readxl::read_xlsx to read in the GLCs
+
+8. Visualize the number of accidents in each county using a choropleth map. To do this, you need to join the accident data, GLCs, and appropriate map data.
+
+9. Can you find seasonal trends in accident occurrences in different states? Is summer or winter more dangerous? Why?
