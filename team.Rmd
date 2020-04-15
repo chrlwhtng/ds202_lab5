@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggplot2)
 
+
 acc <- read.csv("https://raw.githubusercontent.com/xdaiISU/ds202materials/master/hwlabs/fars2017/accident.csv", stringsAsFactors = FALSE)
 
 per <- read.csv("https://raw.githubusercontent.com/xdaiISU/ds202materials/master/hwlabs/fars2017/person.csv", stringsAsFactors = FALSE)
@@ -54,6 +55,7 @@ per <- per %>% filter(PER_TYP == 1)
 5. Join accident and person table (work out which variable(s) to use)
 ```{r}
 dat <- acc %>% full_join(per, by=c('ST_CASE', 'COUNTY', 'DAY', 'MONTH', 'HOUR', 'MINUTE'))
+
 ```
 
 6. Tally the number of accidents by day of the week (DAY_WEEK), hour of the day (HOUR) and gender (SEX). Visualize the results.
@@ -65,10 +67,32 @@ dat %>% filter(SEX == 1 | SEX == 2) %>% ggplot(aes(x=HOUR)) +
 ```
 
 7. Now plot a choropleth map of accidents on a county level
+```{r}
+GLC <-readxl::read_xlsx("FRPP GLC - United StatesFeb132020.xlsx")
+GLC$`State Code` <- as.numeric(GLC$`State Code`)
+GLC$`City Code` <- as.numeric(GLC$`City Code`)
+GLC$`County Code` <- as.numeric(GLC$`County Code`)
+dat <- dat %>% rename(`State Code`  = STATE.x ,`County Code`=COUNTY)
+dat <- left_join(dat, GLC) %>% select(-`Old City Name`, -`Date Record Added`,-`City Name`, -`City Code`)
+dat1 <- dat %>% group_by(`County Name`) %>% summarize(num_accidents= n()) %>% rename(subregion = `County Name`) %>% mutate(subregion = tolower(`subregion`))
+county <- map_data("county")
+dat1 <- left_join(dat1, county)
+dat1 %>% ggplot(aes(x= long, y = lat, fill = num_accidents)) + geom_polygon(aes(group = group))+ scale_fill_gradient(low ="grey", high = "black") + ggtitle("Number of Accidents per County")
+```
 
 Read the description for the STATE and COUNTY columns in the FARS manual. The state & county codes are Geographic Locator Codes (GLCs) from the General Services Administration’s (GSA) publication
 Use readxl::read_xlsx to read in the GLCs
 
 8. Visualize the number of accidents in each county using a choropleth map. To do this, you need to join the accident data, GLCs, and appropriate map data.
-
+```{r}
+dat1 %>% ggplot(aes(x= long, y = lat, fill = num_accidents)) + geom_polygon(aes(group = group))+ scale_fill_gradient(low ="grey", high = "black") + ggtitle("Number of Accidents per County")
+```
 9. Can you find seasonal trends in accident occurrences in different states? Is summer or winter more dangerous? Why?
+```{r}
+#Taking out rows that are not summer or winter "so months that are not 11, 12, 1, 2, 6, 7, 8, 9
+seasons <- dat %>% filter(MONTH %in% c(11,12,1,2,6,7,8,9)) %>% mutate(Season = if_else(MONTH %in% c(11,12,1,2), "WINTER","SUMMER"))
+seasons <- seasons %>% group_by(Season, `State Name`) %>% summarize(num_accidents = n()) %>% rename(region = `State Name`) %>% mutate(region = tolower(region))
+states <- map_data("state")
+seasons <- left_join(seasons, states)
+seasons %>% ggplot(aes(x = long, y = lat, fill = num_accidents)) + geom_polygon(aes(group = group)) + facet_wrap(~Season) + scale_fill_gradient(low = "white", high = "black")
+```
