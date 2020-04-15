@@ -68,7 +68,7 @@ dat %>% filter(SEX == 1 | SEX == 2) %>% ggplot(aes(x=HOUR)) +
 
 7. Now plot a choropleth map of accidents on a county level
 ```{r}
-GLC <-readxl::read_xlsx("FRPP GLC - United StatesFeb132020.xlsx")
+GLC <-readxl::read_xlsx("FRPP.xlsx")
 GLC$`State Code` <- as.numeric(GLC$`State Code`)
 GLC$`City Code` <- as.numeric(GLC$`City Code`)
 GLC$`County Code` <- as.numeric(GLC$`County Code`)
