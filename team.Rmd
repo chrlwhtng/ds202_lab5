@@ -87,6 +87,7 @@ Use readxl::read_xlsx to read in the GLCs
 ```{r}
 dat1 %>% ggplot(aes(x= long, y = lat, fill = num_accidents)) + geom_polygon(aes(group = group))+ scale_fill_gradient(low ="grey", high = "black") + ggtitle("Number of Accidents per County")
 ```
+
 9. Can you find seasonal trends in accident occurrences in different states? Is summer or winter more dangerous? Why?
 ```{r}
 #Taking out rows that are not summer or winter "so months that are not 11, 12, 1, 2, 6, 7, 8, 9
@@ -96,3 +97,7 @@ states <- map_data("state")
 seasons <- left_join(seasons, states)
 seasons %>% ggplot(aes(x = long, y = lat, fill = num_accidents)) + geom_polygon(aes(group = group)) + facet_wrap(~Season) + scale_fill_gradient(low = "white", high = "black")
 ```
+
+
+The trend seems to be that summer is a little more dangerous than winter as more accidents occur during the summer months rather than winter months. This could be for a multitude of reasons one being more drivers on the roads and people not paying as much attention. The numbers of accidents between summer and winter did not vary that much as both values were about the same for each state.
+
